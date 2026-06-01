@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>甲子園の砂</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700;800&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sand: #c8a96e;
+    --sand-light: #e8d5a3;
+    --sand-dark: #8b6914;
+    --sky: #87CEEB;
+    --dusk: #ff7043;
+    --navy: #1a2744;
+    --white: #fdf8f0;
+    --red: #c0392b;
+    --green: #2d5a27;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; }
+
+  /* ===== TITLE SCREEN ===== */
+  #title-screen {
+    background: linear-gradient(180deg, #1a0a00 0%, #3d1c00 40%, #c8a96e 100%);
+  }
+
+  .title-field {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, var(--green) 0%, #1a3d15 100%);
+    clip-path: ellipse(60% 40% at 50% 100%);
+  }
+  .title-diamond {
+    position: absolute;
+    bottom: 38%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 200px;
+    background: linear-gradient(135deg, var(--sand-light), var(--sand));
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    opacity: 0.3;
+  }
+
+  .title-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    margin-bottom: 80px;
+  }
+  .title-sub {
+    font-size: 0.85rem;
+    letter-spacing: 0.4em;
+    color: var(--sand-light);
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+  .title-main {
+    font-family: 'Shippori Mincho', serif;
+    font-size: clamp(3rem, 10vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--white);
+    text-shadow: 0 0 40px rgba(200,169,110,0.6), 0 4px 20px rgba(0,0,0,0.8);
+  }
+  .title-main span { color: var(--sand-light); }
+  .title-desc {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.8;
+  }
+
+  .start-btn {
+    margin-top: 40px;
+    padding: 16px 48px;
+    background: var(--sand);
+    color: var(--navy);
+    border: none;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+    animation: pulse-btn 2s ease-in-out infinite;
+  }
+  .start-btn:hover {
+    background: var(--sand-light);
+    transform: scale(1.05);
+  }
+  @keyframes pulse-btn {
+    0%,100% { box-shadow: 0 0 0 0 rgba(200,169,110,0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(200,169,110,0); }
+  }
+
+  /* ===== GAME SCREEN ===== */
+  #game-screen {
+    background: linear-gradient(180deg, #87ceeb 0%, #b8e0f7 35%, #c8a96e 60%, #a07840 100%);
+    position: relative;
+  }
+
+  /* Sky atmosphere */
+  .game-sky {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 55%;
+    overflow: hidden;
+  }
+  .sun {
+    position: absolute;
+    top: 15%; right: 18%;
+    width: 70px; height: 70px;
+    background: radial-gradient(circle, #fff9e6 30%, #ffd54f 60%, rgba(255,213,79,0) 100%);
+    border-radius: 50%;
+    animation: sun-glow 4s ease-in-out infinite;
+  }
+  @keyframes sun-glow {
+    0%,100% { box-shadow: 0 0 30px 10px rgba(255,213,79,0.4); }
+    50% { box-shadow: 0 0 60px 20px rgba(255,213,79,0.6); }
+  }
+
+  /* Stadium stands */
+  .stands {
+    position: absolute;
+    top: 28%; left: 0; right: 0;
+    height: 12%;
+    background: repeating-linear-gradient(90deg,
+      rgba(30,50,100,0.8) 0px, rgba(30,50,100,0.8) 3px,
+      rgba(50,80,150,0.6) 3px, rgba(50,80,150,0.6) 8px
+    );
+    border-top: 2px solid rgba(255,255,255,0.2);
+  }
+
+  /* Field */
+  .field-area {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 48%;
+    overflow: hidden;
+  }
+  .grass {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 25%;
+    background: linear-gradient(180deg, #2d5a27 0%, #1a3d15 100%);
+  }
+  .infield {
+    position: absolute;
+    top: 18%; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 120px;
+    background: radial-gradient(ellipse, var(--sand) 60%, transparent 100%);
+    border-radius: 50%;
+  }
+  .sand-ground {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 75%;
+    background: linear-gradient(180deg, var(--sand) 0%, #a07840 100%);
+  }
+
+  /* Character */
+  .player-wrap {
+    position: absolute;
+    bottom: 40%; left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    transition: left 0.15s ease;
+  }
+  .player {
+    font-size: 4rem;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    transition: transform 0.1s;
+    cursor: pointer;
+    animation: player-idle 2s ease-in-out infinite;
+  }
+  .player:active { transform: scale(0.9); }
+  @keyframes player-idle {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .player.collecting {
+    animation: collect-anim 0.3s ease;
+  }
+  @keyframes collect-anim {
+    0% { transform: scale(1) rotate(0deg); }
+    40% { transform: scale(0.85) rotate(-10deg) translateY(8px); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* HUD */
+  .hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 16px 20px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+  }
+
+  .hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sand-count {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1rem;
+    color: var(--sand-light);
+  }
+  .sand-count strong {
+    font-size: 2rem;
+    color: var(--white);
+    text-shadow: 0 0 10px rgba(200,169,110,0.8);
+  }
+
+  /* Timer */
+  .timer-wrap {
+    text-align: right;
+  }
+  .timer-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.6);
+    display: block;
+  }
+  .timer {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--white);
+    transition: color 0.3s;
+  }
+  .timer.danger { color: var(--red); animation: blink 0.5s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+  /* Memory gauge */
+  .gauge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .gauge-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--sand-light);
+    white-space: nowrap;
+  }
+  .gauge-bar {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+  }
+  .gauge-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sand-dark), var(--sand), var(--sand-light));
+    border-radius: 5px;
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .gauge-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+    animation: shimmer 2s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+  .gauge-pct {
+    font-size: 0.75rem;
+    color: var(--sand-light);
+    white-space: nowrap;
+    min-width: 35px;
+    text-align: right;
+  }
+
+  /* Sand particles */
+  .particle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 25;
+    font-size: 1.2rem;
+    animation: float-up 1s ease-out forwards;
+  }
+  @keyframes float-up {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
+  }
+
+  .score-popup {
+    position: absolute;
+    pointer-events: none;
+    z-index: 26;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sand-light);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    animation: score-float 1s ease-out forwards;
+  }
+  @keyframes score-float {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-80px); }
+  }
+
+  /* Tap targets */
+  .tap-target {
+    position: absolute;
+    z-index: 15;
+    cursor: pointer;
+    font-size: 2rem;
+    animation: sand-idle 1.5s ease-in-out infinite;
+    transition: transform 0.1s;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+  .tap-target:hover { transform: scale(1.3); }
+  .tap-target:active { transform: scale(0.85); }
+  @keyframes sand-idle {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* Coach warning */
+  .coach-warning {
+    position: absolute;
+    bottom: 20%;
+    right: 5%;
+    z-index: 30;
+    text-align: center;
+    display: none;
+    animation: shake 0.5s ease-in-out infinite;
+  }
+  .coach-warning.show { display: block; }
+  .coach-bubble {
+    background: rgba(255,255,255,0.95);
+    color: var(--navy);
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .coach-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(255,255,255,0.95);
+    border-bottom: none;
+  }
+  .coach-emoji { font-size: 2.5rem; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  /* ===== MEMORY FLASHBACK ===== */
+  #memory-screen {
+    background: #0a0a0a;
+    z-index: 50;
+  }
+
+  .memory-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(200,169,110,0.1) 0%, transparent 70%);
+  }
+
+  .memory-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 40px 24px;
+    max-width: 480px;
+  }
+
+  .memory-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    color: var(--sand);
+    border: 1px solid rgba(200,169,110,0.4);
+    padding: 6px 20px;
+    margin-bottom: 32px;
+    text-transform: uppercase;
+  }
+
+  .memory-scene {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 20px rgba(200,169,110,0.4));
+    animation: memory-appear 1s ease;
+  }
+  @keyframes memory-appear {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .memory-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  .memory-text {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.7);
+    line-height: 2;
+    margin-bottom: 32px;
+    font-weight: 300;
+  }
+
+  .memory-next-btn {
+    padding: 14px 40px;
+    background: transparent;
+    border: 1px solid var(--sand);
+    color: var(--sand);
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .memory-next-btn:hover {
+    background: var(--sand);
+    color: var(--navy);
+  }
+
+  /* film grain on memory */
+  #memory-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ===== ENDING SCREEN ===== */
+  #end-screen {
+    background: linear-gradient(180deg, #0a0a0f 0%, #1a2744 100%);
+    z-index: 60;
+    padding: 40px 24px;
+    text-align: center;
+    overflow-y: auto;
+  }
+
+  .end-stars {
+    font-size: 1.5rem;
+    letter-spacing: 8px;
+    margin-bottom: 24px;
+  }
+
+  .end-emoji { font-size: 6rem; margin-bottom: 16px; filter: drop-shadow(0 0 30px rgba(200,169,110,0.5)); }
+
+  .end-rank {
+    font-size: 0.7rem;
+    letter-spacing: 0.6em;
+    color: var(--sand);
+    margin-bottom: 8px;
+  }
+
+  .end-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: clamp(1.8rem, 6vw, 2.8rem);
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 20px;
+    line-height: 1.3;
+  }
+
+  .end-sand-total {
+    display: inline-block;
+    background: rgba(200,169,110,0.1);
+    border: 1px solid rgba(200,169,110,0.3);
+    padding: 16px 32px;
+    margin-bottom: 24px;
+    font-family: 'Shippori Mincho', serif;
+  }
+  .end-sand-total .num {
+    font-size: 3rem;
+    color: var(--sand-light);
+    display: block;
+    font-weight: 800;
+  }
+  .end-sand-total .label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.2em;
+  }
+
+  .end-message {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.65);
+    line-height: 2;
+    max-width: 360px;
+    margin: 0 auto 32px;
+  }
+
+  .retry-btn {
+    padding: 16px 48px;
+    background: var(--sand);
+    color: var(--navy);
+    border: none;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+  }
+  .retry-btn:hover { background: var(--sand-light); transform: scale(1.05); }
+
+  /* hint */
+  .hint {
+    position: absolute;
+    bottom: 12px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.1em;
+    animation: hint-pulse 3s ease-in-out infinite;
+  }
+  @keyframes hint-pulse { 0%,100%{opacity:0.3}50%{opacity:0.7} }
+
+  /* Memories unlocked list */
+  .memories-unlocked {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .memory-chip {
+    background: rgba(200,169,110,0.15);
+    border: 1px solid rgba(200,169,110,0.3);
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    border-radius: 20px;
+    color: var(--sand-light);
+  }
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div class="screen" id="title-screen">
+  <div class="title-field"></div>
+  <div class="title-diamond"></div>
+  <div class="title-content">
+    <div class="title-sub">KOSHIEN SUMMER 2024</div>
+    <div class="title-main">甲子園の<span>砂</span></div>
+    <div class="title-desc">
+      試合が終わった。<br>
+      あの夏を、この手に刻んで帰ろう。
+    </div>
+    <button class="start-btn" onclick="startGame()">砂を集めはじめる</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen hidden" id="game-screen">
+  <div class="game-sky">
+    <div class="sun"></div>
+    <div class="stands"></div>
+  </div>
+
+  <div class="field-area">
+    <div class="grass"></div>
+    <div class="infield"></div>
+    <div class="sand-ground"></div>
+  </div>
+
+  <div class="hud">
+    <div class="hud-top">
+      <div class="sand-count">
+        砂の量　<strong id="sand-display">0</strong> g
+      </div>
+      <div class="timer-wrap">
+        <span class="timer-label">監督が来るまで</span>
+        <div class="timer" id="timer">60</div>
+      </div>
+    </div>
+    <div class="gauge-wrap">
+      <span class="gauge-label">思い出ゲージ</span>
+      <div class="gauge-bar">
+        <div class="gauge-fill" id="gauge-fill"></div>
+      </div>
+      <span class="gauge-pct" id="gauge-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="player-wrap" id="player-wrap">
+    <div class="player" id="player" onclick="handlePlayerTap(event)">⚾</div>
+  </div>
+
+  <div id="tap-targets-layer"></div>
+
+  <div class="coach-warning" id="coach-warning">
+    <div class="coach-bubble">もう行くぞ！！</div>
+    <div class="coach-emoji">👨‍💼</div>
+  </div>
+
+  <div class="hint">砂をタップして集める　タップするほど思い出が蘇る</div>
+</div>
+
+<!-- MEMORY FLASHBACK -->
+<div class="screen hidden" id="memory-screen">
+  <div class="memory-overlay"></div>
+  <div class="memory-content">
+    <div class="memory-badge">— 思い出 —</div>
+    <div class="memory-scene" id="memory-scene"></div>
+    <div class="memory-title" id="memory-title"></div>
+    <div class="memory-text" id="memory-text"></div>
+    <button class="memory-next-btn" id="memory-next-btn" onclick="closeMemory()">砂を集め続ける</button>
+  </div>
+</div>
+
+<!-- ENDING -->
+<div class="screen hidden" id="end-screen">
+  <div class="end-stars" id="end-stars">⭐⭐⭐</div>
+  <div class="end-emoji" id="end-emoji">🏆</div>
+  <div class="end-rank" id="end-rank">RANK</div>
+  <div class="end-title" id="end-title"></div>
+  <div class="end-sand-total">
+    <span class="num" id="final-sand">0</span>
+    <span class="label">g の砂を持ち帰った</span>
+  </div>
+  <div class="memories-unlocked" id="memories-unlocked"></div>
+  <div class="end-message" id="end-message"></div>
+  <button class="retry-btn" onclick="retryGame()">もう一度あの夏へ</button>
+</div>
+
+<script>
+const MEMORIES = [
+  {
+    scene: "⚾",
+    title: "あの初球",
+    text: "三年間で一番緊張した瞬間。\nマウンドに立ったとき、スタンドの声援が\n波のように押し寄せてきた。",
+    threshold: 20
+  },
+  {
+    scene: "🌅",
+    title: "夏の早朝練習",
+    text: "まだ誰も来ていない校庭。\nひとりで素振りを続けた朝が、\n今日この場所につながっていた。",
+    threshold: 40
+  },
+  {
+    scene: "😭",
+    title: "キャプテンの言葉",
+    text: "「お前らのおかげでここまで来れた」\nあいつが涙をこらえながら言った言葉が、\nまだ耳に残っている。",
+    threshold: 60
+  },
+  {
+    scene: "🏟️",
+    title: "甲子園の土を踏んだ日",
+    text: "初めてこのグラウンドに足を踏み入れたとき。\nここで野球ができる。\nそれだけで、もう十分だと思った。",
+    threshold: 80
+  },
+  {
+    scene: "⭐",
+    title: "最後の夏",
+    text: "もう終わってしまった。\nでも、この砂を握りしめるたびに\nあの夏はずっと、俺の中で生き続ける。",
+    threshold: 100
+  }
+];
+
+let sandCount = 0;
+let memoryProgress = 0; // 0-100
+let timeLeft = 60;
+let timerInterval = null;
+let gameActive = false;
+let memoriesUnlocked = [];
+let currentMemoryIdx = -1;
+let paused = false;
+let tapMultiplier = 1;
+let comboCount = 0;
+let lastTapTime = 0;
+
+const SAND_PER_TAP_BASE = 3;
+const MEMORY_PER_TAP = 2;
+
+function startGame() {
+  sandCount = 0;
+  memoryProgress = 0;
+  timeLeft = 60;
+  memoriesUnlocked = [];
+  currentMemoryIdx = -1;
+  paused = false;
+  comboCount = 0;
+  tapMultiplier = 1;
+
+  show('game-screen');
+  hide('title-screen');
+
+  updateHUD();
+  spawnTapTargets();
+  timerInterval = setInterval(tick, 1000);
+  gameActive = true;
+}
+
+function tick() {
+  if (paused) return;
+  timeLeft--;
+  updateTimer();
+  if (timeLeft <= 10) {
+    document.getElementById('timer').classList.add('danger');
+    document.getElementById('coach-warning').classList.add('show');
+  }
+  if (timeLeft <= 0) {
+    endGame();
+  }
+}
+
+function handlePlayerTap(e) {
+  if (!gameActive || paused) return;
+  collectSand(e.clientX, e.clientY, true);
+}
+
+function collectSand(x, y, fromPlayer) {
+  const now = Date.now();
+  if (now - lastTapTime < 400) {
+    comboCount++;
+    tapMultiplier = Math.min(1 + comboCount * 0.2, 3);
+  } else {
+    comboCount = 0;
+    tapMultiplier = 1;
+  }
+  lastTapTime = now;
+
+  const gain = Math.round(SAND_PER_TAP_BASE * tapMultiplier);
+  sandCount += gain;
+  memoryProgress = Math.min(100, memoryProgress + MEMORY_PER_TAP * tapMultiplier);
+
+  updateHUD();
+  spawnParticle(x, y, gain);
+
+  // Player collect animation
+  const player = document.getElementById('player');
+  player.classList.remove('collecting');
+  void player.offsetWidth;
+  player.classList.add('collecting');
+
+  checkMemory();
+}
+
+function checkMemory() {
+  for (let i = 0; i < MEMORIES.length; i++) {
+    if (memoryProgress >= MEMORIES[i].threshold && !memoriesUnlocked.includes(i)) {
+      memoriesUnlocked.push(i);
+      showMemory(i);
+      break;
+    }
+  }
+}
+
+function showMemory(idx) {
+  paused = true;
+  currentMemoryIdx = idx;
+  const m = MEMORIES[idx];
+  document.getElementById('memory-scene').textContent = m.scene;
+  document.getElementById('memory-title').textContent = m.title;
+  document.getElementById('memory-text').textContent = m.text;
+
+  const btn = document.getElementById('memory-next-btn');
+  btn.textContent = memoryProgress >= 100 ? "この砂を持ち帰る" : "砂を集め続ける";
+
+  show('memory-screen');
+}
+
+function closeMemory() {
+  hide('memory-screen');
+  paused = false;
+  if (memoryProgress >= 100) {
+    endGame();
+  }
+}
+
+function spawnTapTargets() {
+  const layer = document.getElementById('tap-targets-layer');
+  layer.innerHTML = '';
+  const count = 8;
+  const sandEmojis = ['🟫','⬛','🟤','💛'];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'tap-target';
+    el.textContent = sandEmojis[Math.floor(Math.random() * sandEmojis.length)];
+    el.style.left = (10 + Math.random() * 80) + '%';
+    el.style.top = (52 + Math.random() * 35) + '%';
+    el.style.animationDelay = (Math.random() * 1.5) + 's';
+    el.addEventListener('click', (e) => {
+      if (!gameActive || paused) return;
+      collectSand(e.clientX, e.clientY, false);
+      // respawn this target at new position
+      el.style.left = (10 + Math.random() * 80) + '%';
+      el.style.top = (52 + Math.random() * 35) + '%';
+    });
+    layer.appendChild(el);
+  }
+}
+
+function spawnParticle(x, y, val) {
+  const game = document.getElementById('game-screen');
+  const rect = game.getBoundingClientRect();
+
+  // Sand particle
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.textContent = '✨';
+  p.style.left = (x - rect.left - 12) + 'px';
+  p.style.top = (y - rect.top - 12) + 'px';
+  game.appendChild(p);
+  setTimeout(() => p.remove(), 1000);
+
+  // Score popup
+  const s = document.createElement('div');
+  s.className = 'score-popup';
+  s.textContent = '+' + val + 'g';
+  if (tapMultiplier > 1) s.textContent += ' 🔥';
+  s.style.left = (x - rect.left - 20) + 'px';
+  s.style.top = (y - rect.top - 20) + 'px';
+  game.appendChild(s);
+  setTimeout(() => s.remove(), 1000);
+}
+
+function updateHUD() {
+  document.getElementById('sand-display').textContent = sandCount;
+  const pct = Math.round(memoryProgress);
+  document.getElementById('gauge-fill').style.width = pct + '%';
+  document.getElementById('gauge-pct').textContent = pct + '%';
+}
+
+function updateTimer() {
+  document.getElementById('timer').textContent = timeLeft;
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+
+  // Determine ending
+  let ending;
+  if (sandCount >= 300) {
+    ending = {
+      stars: '⭐⭐⭐⭐⭐',
+      emoji: '🏆',
+      rank: 'LEGENDARY',
+      title: '甲子園を丸ごと持ち帰った',
+      message: '君の両手は砂でいっぱいだ。\nこんなに集めた球児は、きっと歴史上はじめてだ。\nその砂の重さの分だけ、青春が詰まっている。'
+    };
+  } else if (sandCount >= 150) {
+    ending = {
+      stars: '⭐⭐⭐⭐',
+      emoji: '😭',
+      rank: 'HERO',
+      title: 'たくさんの思い出とともに',
+      message: '砂の一粒一粒に、あの夏が宿っている。\n帰り道、この砂を見るたびに\nチームメイトの顔が浮かぶだろう。'
+    };
+  } else if (sandCount >= 60) {
+    ending = {
+      stars: '⭐⭐⭐',
+      emoji: '🌅',
+      rank: 'SUMMER',
+      title: 'ほろ苦くて、眩しい夏',
+      message: '少ししか集められなかったけど、\nこれで十分だ。\n君の心の中に甲子園はある。'
+    };
+  } else {
+    ending = {
+      stars: '⭐⭐',
+      emoji: '⚾',
+      rank: 'ROOKIE',
+      title: '次は絶対にもっと集める',
+      message: '悔しい。もっと集めればよかった。\nでもその悔しさが、\n君をまた強くする。'
+    };
+  }
+
+  document.getElementById('end-stars').textContent = ending.stars;
+  document.getElementById('end-emoji').textContent = ending.emoji;
+  document.getElementById('end-rank').textContent = ending.rank;
+  document.getElementById('end-title').textContent = ending.title;
+  document.getElementById('final-sand').textContent = sandCount;
+  document.getElementById('end-message').textContent = ending.message;
+
+  // Memories unlocked chips
+  const ul = document.getElementById('memories-unlocked');
+  ul.innerHTML = '';
+  memoriesUnlocked.forEach(i => {
+    const chip = document.createElement('div');
+    chip.className = 'memory-chip';
+    chip.textContent = MEMORIES[i].scene + ' ' + MEMORIES[i].title;
+    ul.appendChild(chip);
+  });
+
+  hide('game-screen');
+  show('end-screen');
+}
+
+function retryGame() {
+  hide('end-screen');
+  startGame();
+}
+
+function show(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+function hide(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+</script>
+</body>
+</html>
